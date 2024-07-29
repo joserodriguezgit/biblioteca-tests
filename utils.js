@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+const { format } = require('date-fns');
 
 async function login(page, username, password) {
   await page.getByLabel('Usuario').fill(username);
@@ -8,7 +9,7 @@ async function login(page, username, password) {
 
 async function navigateToSection(page, sectionName) {
   const menuOption = await page.getByRole('link', { name: sectionName, exact: true });
-  await Promise.all([page.waitForNavigation(), menuOption.click()]);
+  await menuOption.click();
 }
 
 async function addCategory(page, categoryName, categoryDescription) {
@@ -22,7 +23,7 @@ async function addCategory(page, categoryName, categoryDescription) {
   await descriptionInput.fill(categoryDescription);
 
   const createButton = await page.getByText('Crear');
-  await Promise.all([page.waitForNavigation(), createButton.click()]);
+  await createButton.click();
 }
 
 async function verifyCategoryExists(page, categoryName) {
@@ -34,13 +35,13 @@ async function verifyCategoryExists(page, categoryName) {
 
 async function deleteCategory(page, categoryName) {
   const categoryContainer = await page.locator('#category-container');
-  const categoryElement = await categoryContainer.getByText(categoryName);
+  const categoryElement = await categoryContainer.getByText(categoryName, { exact: true });
   
   if (await categoryElement.count() > 0) {
     const categoryCard = await categoryElement.locator('xpath=ancestor::div[contains(@class, "card")]');
     const deleteButton = await categoryCard.locator('.delete-category');
-    await Promise.all([page.waitForNavigation(), deleteButton.click()]);
-    const deletedCategory = await categoryContainer.getByText(categoryName);
+    await deleteButton.click();
+    const deletedCategory = await categoryContainer.getByText(categoryName, { exact: true });
     return await deletedCategory.count() === 0;
   }
   return false;
@@ -53,6 +54,8 @@ async function addBook(page, bookName, bookImagePath, bookYear, bookCategory) {
   await page.getByPlaceholder('Ejemplo: 2003 ').fill(bookYear);
   await page.selectOption('#categorys', { label: bookCategory });
   await page.getByText('Crear').click();
+  const successMessage = await page.locator('.alert.alert-success').innerText();
+  return successMessage.includes('Libro añadido correctamente');
 }
 
 async function verifyBookExists(page, bookName) {
@@ -68,7 +71,7 @@ const bookElement = await bookContainer.getByText(bookName);
 if (await bookElement.count() > 0) {
     const bookCard = await bookElement.locator('xpath=ancestor::div[contains(@class, "card")]');
     const deleteButton = await bookCard.locator('.delete-book');
-    await Promise.all([page.waitForNavigation(), deleteButton.click()]);
+    await deleteButton.click();
     const deletedBook = await bookContainer.getByText(bookName);
     return await deletedBook.count() === 0;
 }
@@ -110,6 +113,53 @@ async function cleanup() {
   await browser.close();
 }
 
+async function verifyBookExistsInHomePage(page, bookTitle) {
+  const bookContainer = await page.locator('.album .container .row');
+  const bookElement = await bookContainer.locator(`text=${bookTitle}`);
+  return (await bookElement.count()) > 0;
+}
+
+async function clickBookInHomePage(page, bookTitle) {
+  const bookContainer = await page.locator('.album .container .row');
+  const bookElement = await bookContainer.locator(`text=${bookTitle}`);
+  if (await bookElement.count() > 0) {
+    await bookElement.first().click();
+  }
+}
+
+async function requestLoan(page) {
+  await page.click('button:has-text("Solicitar")');
+}
+
+async function verifyBookInLoanList(page, bookTitle) {
+  const loanContainer = await page.locator('.row-cols-1.row-cols-sm-2.row-cols-md-3.g-3');
+  await loanContainer.waitFor({ state: 'attached' });
+  const bookElement = await loanContainer.locator(`text=${bookTitle}`).first();
+  return (await bookElement.count() > 0);
+}
+
+async function returnBook(page, bookTitle) {
+  // Locate the parent container of the book
+  const loanContainer = await page.locator('.row-cols-1.row-cols-sm-2.row-cols-md-3.g-3');
+  await loanContainer.waitFor({ state: 'attached' });
+  const bookElement = await loanContainer.locator(`text=${bookTitle}`).first();
+  if (await bookElement.count() > 0) {
+    // Locate the parent of the bookElement to find the return button
+    const parentElement = bookElement.first().locator('xpath=ancestor::div[contains(@class, "card")]');
+    const formElement = await parentElement.locator('form').locator('button:has-text("Devolver")');
+
+    await formElement.click();
+
+    // Wait for the status to change
+    const currentDate = format(new Date(), 'EEE MMM dd yyyy');
+    const returnedText = await parentElement.locator(`text=Devuelto: ${currentDate}`).first();
+    return (await returnedText.count() > 0);
+  }
+  return false;
+}
+
+
+
 module.exports = {
   login,
   navigateToSection,
@@ -121,5 +171,10 @@ module.exports = {
   deleteBook,
   listAllBooks,
   listAllCategories,
-  cleanup
+  cleanup,
+  verifyBookExistsInHomePage,
+  clickBookInHomePage,
+  requestLoan,
+  returnBook,
+  verifyBookInLoanList
 };
