@@ -158,6 +158,14 @@ async function returnBook(page, bookTitle) {
   return false;
 }
 
+async function searchBook(page, bookTitle) {
+  // Locate the search input and fill it with the book title
+  await page.fill('input[name="book"]', bookTitle);
+  
+  // Click the 'Buscar' button
+  await page.click('button:has-text("Buscar")');
+}
+
 module.exports = {
   login,
   navigateToSection,
@@ -174,5 +182,6 @@ module.exports = {
   clickBookInHomePage,
   requestLoan,
   returnBook,
-  verifyBookInLoanList
+  verifyBookInLoanList,
+  searchBook
 };

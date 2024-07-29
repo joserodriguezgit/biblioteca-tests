@@ -29,7 +29,6 @@ test.describe('Flujos E2E', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000/login');
     await login(page, 'jose', '1234');
-    await cleanup(page);
   });
 
   test('Crear categoría y crear libro, y luego eliminar ambas cosas', async ({ page }) => {
