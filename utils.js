@@ -158,8 +158,6 @@ async function returnBook(page, bookTitle) {
   return false;
 }
 
-
-
 module.exports = {
   login,
   navigateToSection,

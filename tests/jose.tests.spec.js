@@ -32,7 +32,6 @@ test.describe('Flujos E2E', () => {
     await cleanup(page);
   });
 
-  
   test('Crear categoría y crear libro, y luego eliminar ambas cosas', async ({ page }) => {
 
     // Verificamos que se muestra la pantalla de inicio
@@ -70,8 +69,6 @@ test.describe('Flujos E2E', () => {
     await navigateToSection(page, 'Libros');
     const bookExists = await verifyBookExists(page, 'Percy Jackson y el ladron del rayo');
     expect(bookExists).toBe(false);
-
-
   });
 
   test('Crear una categoría y un libro, eliminar la categoría sin haber eliminado el libro', async ({ page }) => {
@@ -100,10 +97,10 @@ test.describe('Flujos E2E', () => {
     await navigateToSection(page, 'Categorías');
     await deleteCategory(page, 'Ficción');
 
-        // Verificar que fue eliminado el libro de la categoría eliminada.
-        await navigateToSection(page, 'Libros');
-        const bookExists = await verifyBookExists(page, 'Percy Jackson y el ladron del PLD');
-        expect(bookExists).toBe(false);
+    // Verificar que fue eliminado el libro de la categoría eliminada.
+    await navigateToSection(page, 'Libros');
+    const bookExists = await verifyBookExists(page, 'Percy Jackson y el ladron del PLD');
+    expect(bookExists).toBe(false);
   });
 
   test('Crear más de una categoría con múltiples libros, eliminar una categoría sin haber eliminado sus libros', async ({ page }) => {
@@ -216,7 +213,5 @@ test.describe('Flujos E2E', () => {
     // Verificar que el libro se muestre nuevamente en la pantalla principal
     await navigateToSection(page, 'Home');
     await verifyBookExistsInHomePage(page, bookTitle);
-
   });
-
 });
